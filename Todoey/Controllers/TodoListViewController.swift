@@ -16,6 +16,8 @@ class TodoListViewController: UITableViewController {
     
     let dataFilePath: URL = (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist"))!
     
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -60,7 +62,11 @@ class TodoListViewController: UITableViewController {
         let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
         
         let action = UIAlertAction(title: "Add Item", style: .default) { (alertAction) in
-            self.itemArray.append(Item(title: textField.text ?? ""))
+            // what happens when clicked
+            
+            let newItem = Item(context: context)
+            newItem.title = textField.text ?? ""
+            self.itemArray.append(newItem)
             
             self.saveItems()
         }
@@ -80,13 +86,10 @@ class TodoListViewController: UITableViewController {
     
     func saveItems(){
         
-        let encoder = PropertyListEncoder()
-        
         do {
-            let data = try encoder.encode(itemArray)
-            try data.write(to: dataFilePath)
+            try context.save()
         } catch {
-            print("Error encoding. Error: \(error)")
+            
         }
         
         tableView.reloadData()
@@ -96,11 +99,7 @@ class TodoListViewController: UITableViewController {
     func loadItems(){
         if let data = try? Data(contentsOf: dataFilePath) {
             let decoder = PropertyListDecoder()
-            do {
-                itemArray = try decoder.decode([Item].self, from: data)
-            } catch {
-                print("Error decoding. Error: \(error)")
-            }
+            itemArray = try decoder.decode([Item].self, from: data)
         }
     }
     
